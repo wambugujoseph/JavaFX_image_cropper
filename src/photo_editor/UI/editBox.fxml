@@ -7,9 +7,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="221.0" prefWidth="418.0" style="-fx-border-color: black;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="photo_editor.UI.EditBoxController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="213.0" prefWidth="418.0" style="-fx-border-color: black;" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="photo_editor.UI.EditBoxController">
    <children>
-      <HBox fx:id="image_area" alignment="CENTER" layoutX="10.0" layoutY="7.0" prefHeight="144.0" prefWidth="393.0" style="-fx-background-color: #c0c0c0;" />
+      <HBox fx:id="image_area" alignment="CENTER" layoutX="10.0" layoutY="7.0" prefHeight="144.0" prefWidth="400.0" style="-fx-background-color: #c0c0c0;" />
       <TextField fx:id="fileName" layoutX="74.0" layoutY="181.0" prefHeight="26.0" prefWidth="283.0">
          <font>
             <Font name="Lucida Bright Regular" size="12.0" />
