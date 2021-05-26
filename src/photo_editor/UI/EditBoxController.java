@@ -54,6 +54,7 @@ public class EditBoxController implements Initializable {
 
     private double widthZoomRatio;
     private double heightZoomRatio;
+    private File originalImageFile;
 
 
     @Override
@@ -87,8 +88,8 @@ public class EditBoxController implements Initializable {
 
         if (!filName.isEmpty() && isCorrectImageName(filName.toLowerCase())) {
             String storePath = ImageUtil.CROP_SAVE_DIR + "/" + this.fileName.getText();
-            File fileToCrop = new File(this.fileName.getText());
-            crop(x, y, width, height, fileToCrop, storePath, getFileExtension(fileToCrop.getName()));
+
+            crop(x, y, width, height, originalImageFile, storePath, getFileExtension(originalImageFile.getName()));
 
         } else {
             new Alert(Alert.AlertType.ERROR, "Invalid file name! ").show();
@@ -108,6 +109,7 @@ public class EditBoxController implements Initializable {
      */
     public void crop(int x, int y, int width, int height, File imageToCrop, String outPutFilePath, String formatName) {
         try {
+
             BufferedImage originalImage = ImageIO.read(imageToCrop);
 
             BufferedImage subImage = originalImage.getSubimage(x, y, width, height);
@@ -161,6 +163,8 @@ public class EditBoxController implements Initializable {
     public void imageToCropMessage(File file) {
 
         if (file != null) {
+
+            originalImageFile = file;
             mainImageView = new ImageView();
             final AreaSelection areaSelection = new AreaSelection();
             final Group selectionGroup = new Group();
@@ -352,7 +356,7 @@ public class EditBoxController implements Initializable {
             if (selectionRectangle != null)
                 isAreaSelected = true;
             assert selectionRectangle != null;
-            darkenOutsideRectangle(selectionRectangle);
+            //darkenOutsideRectangle(selectionRectangle);
         };
 
 
