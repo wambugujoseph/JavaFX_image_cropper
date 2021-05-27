@@ -20,10 +20,7 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -60,9 +57,10 @@ public class Controller implements Initializable {
     private FileChooser fc;
     private DirectoryChooser dc;
 
+    private final List<FXMLLoader> editBoxLoaders = new ArrayList<>();
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
 
         //initiate all action events
         actionEventHandler();
@@ -81,9 +79,11 @@ public class Controller implements Initializable {
         //Remove all photos
         removeAllImg.setOnAction(event -> clearAllThePhotos());
 
-        saveLocationTextField.textProperty().addListener(entry ->{
-           ImageUtil.CROP_SAVE_DIR = saveLocationTextField.getText();
+        saveLocationTextField.textProperty().addListener(entry -> {
+            ImageUtil.CROP_SAVE_DIR = saveLocationTextField.getText();
         });
+
+        cropAll.setOnAction(e -> initCropAll());
 
     }
 
@@ -100,9 +100,10 @@ public class Controller implements Initializable {
         fc.getExtensionFilters().add(ef);
         List<File> files = fc.showOpenMultipleDialog(chooseMultImg.getScene().getWindow());
         showProgressIndicator();
-        if (files != null && files.size() >0) {
+        if (files != null && files.size() > 0) {
             prepareImageForCropping(files);
-        }
+        } else
+            removeLoadImageProgress();
 
     }
 
@@ -126,11 +127,11 @@ public class Controller implements Initializable {
         File location = dc.showDialog(openFolderOfImg.getScene().getWindow());
 
 
-        new Thread(()->{
+        new Thread(() -> {
 
-            if (location != null &&location.isDirectory()) {
+            if (location != null && location.isDirectory()) {
                 Platform.runLater(this::showProgressIndicator);
-                List<File>  fileList = Arrays.asList(Objects.requireNonNull(location.listFiles()));
+                List<File> fileList = Arrays.asList(Objects.requireNonNull(location.listFiles()));
                 // System.out.println(location.getAbsolutePath());
 
                 //Filter on the JPG and PNG images
@@ -146,7 +147,7 @@ public class Controller implements Initializable {
                 imageListSize = images.size();
                 //Open the image for cropping
                 prepareImageForCropping(images);
-        }
+            }
         }).start();
     }
 
@@ -161,12 +162,12 @@ public class Controller implements Initializable {
         double count = 0;
         for (File imageFile : imageToCrop) {
             //check if file is an image
-            if (isFileImage(imageFile)){
+            if (isFileImage(imageFile)) {
                 passImageToEditBoxController(imageFile);
             }
             count++;
             double finalCount = count;
-            Platform.runLater(()->setSpinnerProgress(finalCount));
+            Platform.runLater(() -> setSpinnerProgress(finalCount));
             try {
                 Thread.sleep(25);
             } catch (InterruptedException e) {
@@ -194,58 +195,98 @@ public class Controller implements Initializable {
         return false;
     }
 
+    private void initCropAll() {
+
+        showProgressIndicator();
+        List<FXMLLoader> copy = new ArrayList<>(editBoxLoaders);
+
+        for (FXMLLoader loader : copy) {
+            EditBoxController editBoxController = loader.getController();
+            boolean isCropped = editBoxController.invokeCrop();
+
+            if (isCropped) {
+               removeEditBox(loader);
+            }
+        }
+        removeLoadImageProgress();
+
+    }
+
+    public void removeEditBox(FXMLLoader loader){
+        int index = editBoxLoaders.indexOf(loader);
+        editBoxLoaders.remove(index);
+        workingArea.getChildren().remove(index);
+    }
+
+
     /**
      * The Method pass and image as message to the EditBoxController before displaying it
      *
      * @param imageFile is the i mage file to pass to the EditBoxController
      */
-    private void passImageToEditBoxController(File imageFile){
-       Platform.runLater(()->{
-           if(imageFile !=null){
-               if (isFileImage(imageFile)){
-                   try {
-                       //Load the FXML edit Box
-                       FXMLLoader loader = new FXMLLoader(getClass().getResource("editBox.fxml"));
-                       AnchorPane root = loader.load();
+    private void passImageToEditBoxController(File imageFile) {
+        Platform.runLater(() -> {
+            if (imageFile != null) {
+                if (isFileImage(imageFile)) {
+                    try {
+                        //Load the FXML edit Box
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("editBox.fxml"));
+                        AnchorPane root = loader.load();
 
-                       EditBoxController editBox = loader.getController();
-                       //pass image
-                       editBox.imageToCropMessage(imageFile);
+                        EditBoxController editBox = loader.getController();
 
-                       //show the edit Box
-                       showEditBoxOnCroppingArea(root);
+                        //store every controller object created
+                        editBoxLoaders.add(loader);
+                        //pass image
+                        editBox.imageToCropMessage(imageFile);
+                        //Pass the loader
+                        passFXMLoaderToEditBox(loader, editBox);
 
-                   } catch (IOException e) {
-                       e.printStackTrace();
-                   }
-               }
-           }
-       });
+                        //show the edit Box
+                        showEditBoxOnCroppingArea(root);
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
     }
+
+    /**
+     * The method help pass the loader to the edit box the is return back  to the current
+     * controller to help remove it from the display
+     *
+     * @param loader the fxml loader that was used to lead the editBox window
+     * @param controller is the controller editBox
+     */
+    private void passFXMLoaderToEditBox(FXMLLoader loader, EditBoxController controller){
+        controller.setEditBoxLoader(loader);
+    };
 
     /**
      * The method displays the the EditBox pane on the cropping area (Grid pane)
      *
      * @param editBox the cropping pane that effects a single image
      */
-    private void showEditBoxOnCroppingArea(AnchorPane editBox){
+    private void showEditBoxOnCroppingArea(AnchorPane editBox) {
         workingArea.getChildren().add(editBox);
     }
 
     /**
      * The method clears the Image displayed for clopping
      */
-    private void clearAllThePhotos(){
+    private void clearAllThePhotos() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, "Would you like to remove all the Photos");
 
         alert.showAndWait().ifPresent(buttonType -> {
-            if (buttonType == ButtonType.OK){
+            if (buttonType == ButtonType.OK) {
                 int numOfNode = workingArea.getChildren().size();
 
-                if(numOfNode > 0){
-                    if (numOfNode ==1){
+                if (numOfNode > 0) {
+                    if (numOfNode == 1) {
                         workingArea.getChildren().remove(0);
-                    }else{
+                    } else {
                         workingArea.getChildren().remove(0, numOfNode);
                     }
                 }
@@ -253,7 +294,7 @@ public class Controller implements Initializable {
         });
     }
 
-    private VBox getLoadImageProgress(){
+    private VBox getLoadImageProgress() {
 
         spinner = new JFXSpinner();
 
@@ -284,21 +325,20 @@ public class Controller implements Initializable {
     }
 
     /**
-     *
      * @param progress double value between 0 and 1
      */
     public void setSpinnerProgress(double progress) {
-        Platform.runLater(()->this.spinner.setProgress(progress/imageListSize));
+        Platform.runLater(() -> this.spinner.setProgress(progress / imageListSize));
     }
 
 
-    private void showProgressIndicator(){
+    private void showProgressIndicator() {
         stackHolder.getChildren().add(getLoadImageProgress());
     }
 
-    private void removeLoadImageProgress(){
-        Platform.runLater(()->{
-            if (stackHolder.getChildren().size() >1) {
+    private void removeLoadImageProgress() {
+        Platform.runLater(() -> {
+            if (stackHolder.getChildren().size() > 1) {
                 stackHolder.getChildren().remove(1);
             }
         });

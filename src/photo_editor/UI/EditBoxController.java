@@ -2,6 +2,7 @@ package photo_editor.UI;
 
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 
 import javafx.geometry.Bounds;
@@ -18,6 +19,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import photo_editor.App;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -55,6 +57,10 @@ public class EditBoxController implements Initializable {
     private double widthZoomRatio;
     private double heightZoomRatio;
     private File originalImageFile;
+    private FXMLLoader editBoxLoader;
+
+    final AreaSelection areaSelection = new AreaSelection();
+    final Group selectionGroup = new Group();
 
 
     @Override
@@ -75,8 +81,9 @@ public class EditBoxController implements Initializable {
      *
      * @param bounds    is the cropping area bounds
      * @param imageView holds the original image
+     * @return true for successful cropping
      */
-    private void cropImage(Bounds bounds, ImageView imageView) {
+    private boolean cropImage(Bounds bounds, ImageView imageView) {
 
         int width = (int) (bounds.getWidth() * widthZoomRatio);
         int height = (int) (bounds.getHeight() * heightZoomRatio);
@@ -89,11 +96,12 @@ public class EditBoxController implements Initializable {
         if (!filName.isEmpty() && isCorrectImageName(filName.toLowerCase())) {
             String storePath = ImageUtil.CROP_SAVE_DIR + "/" + this.fileName.getText();
 
-            crop(x, y, width, height, originalImageFile, storePath, getFileExtension(originalImageFile.getName()));
+            return crop(x, y, width, height, originalImageFile, storePath, getFileExtension(originalImageFile.getName()));
 
         } else {
             new Alert(Alert.AlertType.ERROR, "Invalid file name! ").show();
         }
+        return false;
     }
 
     /**
@@ -106,8 +114,9 @@ public class EditBoxController implements Initializable {
      * @param imageToCrop    Image file to be cropped
      * @param outPutFilePath cropped image filePath
      * @param formatName     File extension "JPG", "PNG" ...
+     * @return true is the image is croped
      */
-    public void crop(int x, int y, int width, int height, File imageToCrop, String outPutFilePath, String formatName) {
+    public boolean crop(int x, int y, int width, int height, File imageToCrop, String outPutFilePath, String formatName) {
         try {
 
             BufferedImage originalImage = ImageIO.read(imageToCrop);
@@ -118,6 +127,7 @@ public class EditBoxController implements Initializable {
 
             ImageIO.write(subImage, formatName, outPutFile);
 
+            return true;
         } catch (RasterFormatException e){
             new Alert(Alert.AlertType.ERROR, e.getMessage()+
                     "\nThe error is cased by:" +
@@ -126,7 +136,9 @@ public class EditBoxController implements Initializable {
         }catch(IOException e){
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
             e.printStackTrace();
+
         }
+        return false;
     }
 
     /**
@@ -166,17 +178,15 @@ public class EditBoxController implements Initializable {
 
             originalImageFile = file;
             mainImageView = new ImageView();
-            final AreaSelection areaSelection = new AreaSelection();
-            final Group selectionGroup = new Group();
-
 
         /*
             crop button action event handling
          */
             cropBtn.setOnAction(event -> {
-                //System.out.println(areaSelection.selectArea(selectionGroup).getBoundsInParent().getWidth());
-                if (isAreaSelected) {
-                    cropImage(areaSelection.selectArea(selectionGroup).getBoundsInParent(), mainImageView);
+                boolean isCropped= invokeCrop();
+                if (isCropped){
+                     Controller controller = App.loader.getController();
+                     controller.removeEditBox(editBoxLoader);
                 }
 
             });
@@ -223,11 +233,23 @@ public class EditBoxController implements Initializable {
     }
 
 
+    public void setEditBoxLoader(FXMLLoader loader){
+        this.editBoxLoader = loader;
+    }
+
     private void clearSelection(Group group) {
         //deletes everything except for base container layer
         isAreaSelected = false;
         group.getChildren().remove(1, group.getChildren().size());
 
+    }
+
+    public boolean invokeCrop(){
+        //System.out.println(areaSelection.selectArea(selectionGroup).getBoundsInParent().getWidth());
+        if (isAreaSelected) {
+           return cropImage(areaSelection.selectArea(selectionGroup).getBoundsInParent(), mainImageView);
+        }
+        return  false;
     }
 
     private Image convertFileToImage(File imageFile) {
@@ -255,6 +277,10 @@ public class EditBoxController implements Initializable {
      */
     private boolean isWidthLongest() {
         return mainImageView.getFitHeight() < mainImageView.getFitWidth();
+    }
+
+    public Button getCropBtn() {
+        return cropBtn;
     }
 
     public class AreaSelection {
@@ -296,22 +322,6 @@ public class EditBoxController implements Initializable {
             }
             return selectionRectangle;
         }
-
-//        EventHandler<MouseEvent> onMousePressedEventHandler = event -> {
-//            if (event.isSecondaryButtonDown())
-//                return;
-//
-//
-//            rectangleStartX = event.getX();
-//            rectangleStartY = event.getY();
-//
-//            clearSelection(group);
-//
-//            //selectionRectangle = new ResizableRectangle(rectangleStartX, rectangleStartY, 0, 0, group);
-//            //darkenOutsideRectangle(selectionRectangle);
-//            displayImageDimensions();
-//
-//        };
 
         EventHandler<MouseEvent> onMouseDraggedEventHandler = event -> {
             if (event.isSecondaryButtonDown())

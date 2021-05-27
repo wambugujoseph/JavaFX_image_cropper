@@ -11,11 +11,14 @@ import javafx.stage.Stage;
 
 public class App extends Application {
 
+    public  static  FXMLLoader loader;
+
     @Override
     public void start(Stage primaryStage) throws Exception {
 
-        Parent root = FXMLLoader.load(getClass().getResource("UI/image_editor.fxml"));
+        loader = new FXMLLoader(getClass().getResource("UI/image_editor.fxml"));
 
+        Parent root = loader.load();
 
         Scene scene = new Scene(root);
 
