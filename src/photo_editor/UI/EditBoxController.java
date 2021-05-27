@@ -57,7 +57,7 @@ public class EditBoxController implements Initializable {
     private double widthZoomRatio;
     private double heightZoomRatio;
     private File originalImageFile;
-    private FXMLLoader editBoxLoader;
+    private String editBoxLoader;
 
     final AreaSelection areaSelection = new AreaSelection();
     final Group selectionGroup = new Group();
@@ -233,8 +233,8 @@ public class EditBoxController implements Initializable {
     }
 
 
-    public void setEditBoxLoader(FXMLLoader loader){
-        this.editBoxLoader = loader;
+    public void setEditBoxIdentity(String identity){
+        this.editBoxLoader = identity;
     }
 
     private void clearSelection(Group group) {

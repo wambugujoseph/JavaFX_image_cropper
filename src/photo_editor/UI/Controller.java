@@ -57,7 +57,8 @@ public class Controller implements Initializable {
     private FileChooser fc;
     private DirectoryChooser dc;
 
-    private final List<FXMLLoader> editBoxLoaders = new ArrayList<>();
+    private final List<String> fileNameIdentifier = new ArrayList<>();
+    private final List<FXMLLoader> loaders = new ArrayList<>();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -198,24 +199,26 @@ public class Controller implements Initializable {
     private void initCropAll() {
 
         showProgressIndicator();
-        List<FXMLLoader> copy = new ArrayList<>(editBoxLoaders);
+        List<String> copy = new ArrayList<>(fileNameIdentifier);
 
-        for (FXMLLoader loader : copy) {
-            EditBoxController editBoxController = loader.getController();
+        for (String identity : copy) {
+            int index = fileNameIdentifier.indexOf(identity);
+            EditBoxController editBoxController = loaders.get(index).getController();
             boolean isCropped = editBoxController.invokeCrop();
 
             if (isCropped) {
-               removeEditBox(loader);
+               removeEditBox(identity);
             }
         }
         removeLoadImageProgress();
 
     }
 
-    public void removeEditBox(FXMLLoader loader){
-        int index = editBoxLoaders.indexOf(loader);
-        editBoxLoaders.remove(index);
+    public void removeEditBox(String identifier){
+        int index = fileNameIdentifier.indexOf(identifier);
+        fileNameIdentifier.remove(index);
         workingArea.getChildren().remove(index);
+        loaders.remove(index);
     }
 
 
@@ -236,11 +239,12 @@ public class Controller implements Initializable {
                         EditBoxController editBox = loader.getController();
 
                         //store every controller object created
-                        editBoxLoaders.add(loader);
+                        loaders.add(loader);
+                        fileNameIdentifier.add(imageFile.getName());
                         //pass image
                         editBox.imageToCropMessage(imageFile);
                         //Pass the loader
-                        passFXMLoaderToEditBox(loader, editBox);
+                        passFXMLoaderToEditBox(imageFile.getName(), editBox);
 
                         //show the edit Box
                         showEditBoxOnCroppingArea(root);
@@ -257,11 +261,11 @@ public class Controller implements Initializable {
      * The method help pass the loader to the edit box the is return back  to the current
      * controller to help remove it from the display
      *
-     * @param loader the fxml loader that was used to lead the editBox window
+     * @param identity the fxml loader that was used to lead the editBox window
      * @param controller is the controller editBox
      */
-    private void passFXMLoaderToEditBox(FXMLLoader loader, EditBoxController controller){
-        controller.setEditBoxLoader(loader);
+    private void passFXMLoaderToEditBox(String identity, EditBoxController controller){
+        controller.setEditBoxIdentity(identity);
     };
 
     /**
