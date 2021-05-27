@@ -124,7 +124,7 @@ public class EditBoxController implements Initializable {
                     "\n  Cropping window is outside the image").show();
             e.printStackTrace();
         }catch(IOException e){
-            new Alert(Alert.AlertType.ERROR, e.getMessage()+"\nThe error is caused by:\n  Cropping a screenshot image.").show();
+            new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
             e.printStackTrace();
         }
     }
@@ -287,7 +287,8 @@ public class EditBoxController implements Initializable {
                     selectionRectangle = new ResizableRectangle(1, y, getShortSideOfImage() - 2, getShortSideOfImage() - 2, group);
                 }
 
-                selectionRectangle.setMaxResizeLimit(selectionRectangle.getWidth(), selectionRectangle.getHeight());
+                //Set the allowable movement rectangle of the cropping rectangle
+                selectionRectangle.setAllowableMovingArea(mainImageView.getFitWidth(), mainImageView.getFitHeight());
 
                 isAreaSelected = true;
                 displayImageDimensions();
