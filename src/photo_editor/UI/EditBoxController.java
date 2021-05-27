@@ -132,10 +132,10 @@ public class EditBoxController implements Initializable {
             new Alert(Alert.AlertType.ERROR, e.getMessage()+
                     "\nThe error is cased by:" +
                     "\n  Cropping window is outside the image").show();
-            e.printStackTrace();
+            //e.printStackTrace();
         }catch(IOException e){
             new Alert(Alert.AlertType.ERROR, e.getMessage()).show();
-            e.printStackTrace();
+            //e.printStackTrace();
 
         }
         return false;
